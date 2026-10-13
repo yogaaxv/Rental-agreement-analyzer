@@ -1,58 +1,67 @@
 import { readFile } from 'fs/promises';
-import { fileURLToPath } from 'url';
-import path from 'path';
+import { createRequire } from 'module';
+import { pathToFileURL } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 
 /**
  * Extract text from a PDF file, organized by page.
- * Uses pdfjs-dist legacy build with dynamic import to avoid top-level global mutations.
+ * Uses pdfjs-dist legacy build in Node.js with the real worker file URL.
  *
  * @param {string} filePath - Absolute path to the PDF file.
  * @returns {Promise<Array<{ pageNumber: number, text: string }>>}
  */
 export async function extractTextByPage(filePath) {
-  // Dynamic import — pdfjs-dist 4.x uses named exports (no default export)
-  const pdfjsModule = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
-  const GlobalWorkerOptions = pdfjsModule.GlobalWorkerOptions;
-  const getDocument = pdfjsModule.getDocument;
-
-  // Set workerSrc to empty string to suppress the worker warning in Node.js.
-  // In Node.js there is no web worker; pdfjs falls back to in-thread processing.
-  GlobalWorkerOptions.workerSrc = '';
+  // Point workerSrc to the actual worker file so pdfjs can load it
+  const workerPath = require.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
 
   const fileBuffer = await readFile(filePath);
   const data = new Uint8Array(fileBuffer);
 
-  const loadingTask = getDocument({
-    data,
-    useWorkerFetch: false,
-    isEvalSupported: false,
-    useSystemFonts: true,
-  });
+  let pdfDocument;
+  try {
+    const loadingTask = pdfjsLib.getDocument({
+      data,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true,
+    });
+    pdfDocument = await loadingTask.promise;
+  } catch (err) {
+    if (err.name === 'PasswordException') {
+      throw new Error('PDF is password-protected and cannot be processed.');
+    }
+    if (err.name === 'InvalidPDFException') {
+      throw new Error('The uploaded file is not a valid PDF.');
+    }
+    throw new Error(`PDF loading failed: ${err.message}`);
+  }
 
-  const pdfDocument = await loadingTask.promise;
   const numPages = pdfDocument.numPages;
+  if (numPages === 0) {
+    throw new Error('The PDF has no pages.');
+  }
+
   const pageTexts = [];
 
   for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-    const page = await pdfDocument.getPage(pageNum);
-    const textContent = await page.getTextContent();
+    try {
+      const page = await pdfDocument.getPage(pageNum);
+      const textContent = await page.getTextContent();
 
-    // Join all text items, preserving line breaks where appropriate
-    const text = textContent.items
-      .map((item) => {
-        if (item.hasEOL) {
-          return item.str + '\n';
-        }
-        return item.str;
-      })
-      .join(' ')
-      .replace(/ +/g, ' ')
-      .trim();
+      const text = textContent.items
+        .map((item) => (item.hasEOL ? item.str + '\n' : item.str))
+        .join(' ')
+        .replace(/ +/g, ' ')
+        .trim();
 
-    pageTexts.push({ pageNumber: pageNum, text });
+      pageTexts.push({ pageNumber: pageNum, text });
+    } catch (err) {
+      pageTexts.push({ pageNumber: pageNum, text: '' });
+    }
   }
 
   return pageTexts;
