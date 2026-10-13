@@ -10,6 +10,8 @@ frontend/.env
 # Uploaded and generated files
 backend/uploads/*.pdf
 backend/reports/*.pdf
+uploads/*.pdf
+reports/*.pdf
 
 # Database
 *.sqlite
