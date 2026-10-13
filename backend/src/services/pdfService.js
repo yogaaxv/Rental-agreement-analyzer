@@ -1,5 +1,5 @@
 import { readFile } from 'fs/promises';
-import { fileURLToPath, pathToFileURL } from 'url';
+import { fileURLToPath } from 'url';
 import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -18,12 +18,9 @@ export async function extractTextByPage(filePath) {
   const GlobalWorkerOptions = pdfjsModule.GlobalWorkerOptions;
   const getDocument = pdfjsModule.getDocument;
 
-  // On Windows, workerSrc must be a file:// URL (plain Windows paths are rejected by the ESM loader)
-  const workerPath = path.resolve(
-    __dirname,
-    '../../node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs'
-  );
-  GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
+  // Set workerSrc to empty string to suppress the worker warning in Node.js.
+  // In Node.js there is no web worker; pdfjs falls back to in-thread processing.
+  GlobalWorkerOptions.workerSrc = '';
 
   const fileBuffer = await readFile(filePath);
   const data = new Uint8Array(fileBuffer);
