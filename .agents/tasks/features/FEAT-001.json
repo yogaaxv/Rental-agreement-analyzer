@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Scaffold the complete project structure and implement the full Node.js/Express backend: package setup, database, PDF extraction, LLM analysis, Zod validation, report generation, all routes and controllers, and supporting middleware. This feature is independent of FEAT-002 except that FEAT-002 reads the API contract defined here.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "1. Create root package.json with convenience scripts (install:all, dev:backend, dev:frontend, start:backend, build:frontend) and .gitignore covering node_modules, uploads/*.pdf, reports/*.pdf, *.sqlite, .env, dist/.",
 
@@ -67,5 +67,5 @@
     "curl -s http://localhost:3001/api/history  (should return {analyses:[], total:0, page:1, limit:20} or similar)"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "1. better-sqlite3@11.0.3 does not exist on npm — used Node.js v24 built-in node:sqlite (DatabaseSync) instead. No native build step required. API is synchronous positional-parameter based (stmt.run(v1,v2,...) not stmt.run({named})). 2. pdfjs-dist@4.9.155 has NO default export — use named exports: `const { GlobalWorkerOptions, getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs')`. 3. On Windows, GlobalWorkerOptions.workerSrc must be a file:// URL (use pathToFileURL from 'url' module) — plain Windows paths (C:\\...) are rejected. Setting workerSrc to '' or null throws a type error. Correct pattern: `GlobalWorkerOptions.workerSrc = pathToFileURL(path.resolve(__dirname, '../../node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs')).href`. 4. All acceptance criteria verified: npm install succeeds, server starts on port 3001, GET /api/health returns {status:'ok'}, GET /api/history returns pagination object, POST /api/analysis with non-PDF returns 400, POST /api/analysis with PDF reaches LLM stage correctly (fails only with invalid API key as expected)."
 }
