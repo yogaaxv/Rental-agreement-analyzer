@@ -1,0 +1,127 @@
+.agreement-details {
+  margin-bottom: 1.5rem;
+}
+
+.details-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.details-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-white);
+  min-width: 600px;
+}
+
+.details-table thead {
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+
+.details-table th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.th-label { width: 25%; }
+.th-value { width: 40%; }
+.th-page { width: 10%; }
+.th-actions { width: 25%; }
+
+.detail-row {
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background var(--transition);
+}
+
+.detail-row:hover {
+  background: var(--color-bg);
+}
+
+.detail-row:last-of-type {
+  border-bottom: none;
+}
+
+.detail-row-expanded {
+  background: var(--color-indigo-light) !important;
+}
+
+.detail-cell {
+  padding: 0.875rem 1rem;
+  vertical-align: top;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-navy);
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.detail-not-found {
+  color: var(--color-text-light);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.detail-page {
+  white-space: nowrap;
+}
+
+.detail-no-page {
+  color: var(--color-text-light);
+  font-size: 0.875rem;
+}
+
+.detail-no-evidence {
+  font-size: 0.8125rem;
+  color: var(--color-text-light);
+}
+
+.detail-actions {
+  white-space: nowrap;
+}
+
+.evidence-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.75rem;
+  background: var(--color-indigo-light);
+  color: var(--color-indigo);
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.evidence-toggle-btn:hover {
+  background: #e0e7ff;
+}
+
+.evidence-toggle-btn:focus-visible {
+  outline: 2px solid var(--color-indigo);
+  outline-offset: 2px;
+}
+
+.evidence-row {
+  background: var(--color-bg);
+}
+
+.evidence-cell {
+  padding: 0.5rem 1rem 1rem;
+}

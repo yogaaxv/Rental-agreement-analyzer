@@ -1,0 +1,206 @@
+.history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.history-header {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 1rem;
+}
+
+.history-title {
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin-bottom: 0.375rem;
+}
+
+.history-subtitle {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+.history-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem 2rem;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}
+
+.history-count {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+/* Empty state */
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.history-empty-icon {
+  color: var(--color-text-light);
+}
+
+.history-empty-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.history-empty-desc {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* Table */
+.history-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-white);
+  min-width: 560px;
+}
+
+.history-table thead {
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+
+.history-table th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.th-actions {
+  text-align: right;
+}
+
+.history-row {
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background var(--transition);
+}
+
+.history-row:last-child {
+  border-bottom: none;
+}
+
+.history-row:hover {
+  background: var(--color-bg);
+}
+
+.history-cell {
+  padding: 0.875rem 1rem;
+  vertical-align: middle;
+}
+
+.history-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.history-file-icon {
+  color: var(--color-indigo);
+  flex-shrink: 0;
+}
+
+.history-filename {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text);
+  word-break: break-all;
+}
+
+.history-date {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.history-actions-cell {
+  text-align: right;
+}
+
+.history-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.history-action-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.history-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+}
+
+.history-delete-btn:hover:not(:disabled) {
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+  border-color: var(--color-danger-border);
+}
+
+.history-delete-btn:focus-visible {
+  outline: 2px solid var(--color-indigo);
+  outline-offset: 2px;
+}
+
+.history-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.pagination-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.pagination-info {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  min-width: 8rem;
+  text-align: center;
+}

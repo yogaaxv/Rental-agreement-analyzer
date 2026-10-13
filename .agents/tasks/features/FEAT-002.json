@@ -2,7 +2,7 @@
   "id": "FEAT-002",
   "type": "feat",
   "description": "Build the complete React/Vite frontend: project scaffold, all 10 components, 3 pages (Home, Analysis, History), API service layer, routing, styling, and end-to-end wiring to the FEAT-001 backend. FEAT-002 depends on FEAT-001 — the API contract (routes, JSON shapes) defined there must exist before the frontend is verified end-to-end.",
-  "status": "pending",
+  "status": "completed",
   "steps": [
     "1. Create frontend/package.json with 'type':'module' (Vite handles ESM), exact dependencies: react@19.1.0, react-dom@19.1.0, react-router-dom@7.6.2, axios@1.9.0, lucide-react@0.511.0 (check exact latest during install). devDependencies: vite@6.3.5, @vitejs/plugin-react@4.5.2. No TypeScript — plain JS/JSX.",
 
@@ -67,5 +67,5 @@
     "With backend running on :3001, upload a test PDF and confirm the full analysis flow completes"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "1. react-router-dom v7 uses <BrowserRouter> in main.jsx and <Routes><Route> in App.jsx — implemented as specified. 2. Vite build outputs to dist/ (not ../backend/public) to keep frontend self-contained; the proxy in vite.config.js routes /api calls to :3001 in dev. 3. LoadingState uses a setInterval in useEffect with cleanup on unmount; stage 1 is set when upload progress reaches 100%, stages 2-6 advance every 4s via the timer. 4. All 10 components and 3 pages created with accessible semantic HTML and aria attributes. 5. npm run build exits 0 and produces dist/index.html + assets bundle (294 KB JS, 26 KB CSS). 6. lucide-react@0.511.0 installed successfully — all icons (AlertCircle, Check, ChevronDown, ChevronUp, DollarSign, Shield, Calendar, Clock, FileText, Loader, Quote, CheckCircle, XCircle, AlertTriangle, Info, X, Upload, File, Search, ArrowRight, ArrowLeft, Download, FileJson, Trash2, Eye, ChevronLeft, ChevronRight, Clock, Menu) resolved correctly."
 }

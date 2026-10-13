@@ -1,0 +1,120 @@
+.loading-state {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.loading-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Uses .loading-spinner-large from index.css */
+
+.loading-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  margin-bottom: 0.25rem;
+}
+
+.loading-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.stage-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stage-item {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 0;
+  position: relative;
+}
+
+.stage-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 0.875rem;
+  top: calc(50% + 0.875rem);
+  width: 1px;
+  height: 100%;
+  background: var(--color-border);
+  transform: translateX(-50%);
+}
+
+.stage-item.stage-completed:not(:last-child)::after {
+  background: var(--color-success-border);
+}
+
+.stage-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 2px solid var(--color-border);
+  background: var(--color-white);
+}
+
+.stage-completed .stage-icon {
+  background: var(--color-success-light);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+.stage-current .stage-icon {
+  background: var(--color-indigo-light);
+  border-color: var(--color-indigo);
+  color: var(--color-indigo);
+}
+
+.stage-pending .stage-icon {
+  background: var(--color-bg);
+  border-color: var(--color-border);
+}
+
+.stage-spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+.stage-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--color-text-light);
+}
+
+.stage-label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.stage-completed .stage-label {
+  color: var(--color-text-muted);
+}
+
+.stage-current .stage-label {
+  color: var(--color-indigo);
+  font-weight: 600;
+}
+
+.stage-pending .stage-label {
+  color: var(--color-text-light);
+}
