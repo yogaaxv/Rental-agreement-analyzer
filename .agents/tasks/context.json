@@ -1,0 +1,24 @@
+{
+  "project_type": "Greenfield full-stack web app — Node.js/Express backend + React/Vite frontend",
+  "language": "JavaScript (ESM throughout — 'type': 'module' in both package.json files)",
+  "build_system": "npm workspaces NOT used — two independent package.json files (backend/ and frontend/). Backend uses 'node src/server.js' directly. Frontend uses Vite (vite build / vite dev). A root package.json with scripts 'dev:backend', 'dev:frontend', 'install:all' is also created for convenience.",
+  "test_framework": "No test framework pre-exists. The plan does not add one. Verification is done by running the dev servers and making HTTP requests with curl.",
+  "build_command": "cd backend && npm install (requires build tools for better-sqlite3 native addon)",
+  "test_command": "curl -s http://localhost:3001/api/health  — should return {status:'ok'}",
+  "verification_instructions": "1. Run 'npm run install:all' from root to install all deps. 2. Copy backend/.env.example to backend/.env and fill in OPENAI_API_KEY and OPENAI_BASE_URL. 3. Run 'npm run dev:backend' to start Express on :3001. 4. In a second terminal run 'npm run dev:frontend' to start Vite on :5173. 5. Open http://localhost:5173 in a browser. 6. Upload a rental PDF and click Analyze.",
+  "snapshot_or_generated_files": "backend/uploads/ (uploaded PDFs, gitignored), backend/reports/ (generated PDFs, gitignored), backend/database.sqlite (SQLite db file, gitignored)",
+  "environment_constraints": "Node.js v24.21.0 on Windows. npm 11.19.0. better-sqlite3 requires node-gyp and Visual Studio Build Tools or windows-build-tools to compile native bindings on Windows — note in README. pdfjs-dist must be imported as a dynamic ESM import of the legacy build: `const pdfjsLib = (await import('pdfjs-dist/legacy/build/pdf.mjs')).default` then set `pdfjsLib.GlobalWorkerOptions.workerSrc = ''` to suppress the worker warning in Node.js. Do NOT import pdfjs-dist at module top-level — the library mutates globals on load and can crash if worker path resolution fails.",
+  "contribution_requirements": "Greenfield project — no CONTRIBUTING.md or AGENTS.md exists. Follow the user's spec: ES modules, no Python, local PDF extraction, working implementations (no TODO stubs).",
+  "key_patterns": "All backend files use 'import'/'export' (ESM). __dirname equivalent: `const __dirname = path.dirname(fileURLToPath(import.meta.url))`. All routes return JSON. Zod validates both incoming HTTP bodies and LLM JSON output. LLM output parsing wraps JSON.parse in try/catch and falls back to partial extraction. Frontend uses React functional components + hooks. Axios is used for API calls. react-router-dom v7 for routing. Lucide React for icons.",
+  "relevant_files": [
+    "backend/src/services/pdfService.js — pdfjs-dist Node.js usage pattern",
+    "backend/src/services/llmService.js — OpenAI-compatible fetch + Zod validation",
+    "backend/src/schemas/analysisSchema.js — authoritative Zod schema for LLM output",
+    "backend/src/database/database.js — better-sqlite3 setup",
+    "frontend/src/services/api.js — Axios client",
+    "frontend/src/pages/Home.jsx — upload flow + drag-and-drop",
+    "frontend/src/pages/Analysis.jsx — results display",
+    "frontend/src/App.jsx — routing"
+  ],
+  "directory_structure": "rental-agreement-analyzer/ (root, has package.json with workspace scripts) / frontend/ (Vite+React app) / backend/ (Express app, src/ contains routes/ controllers/ services/ schemas/ database/ middleware/ utils/, plus app.js + server.js at src level) / .gitignore / README.md"
+}

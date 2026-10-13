@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables
+.env
+backend/.env
+frontend/.env
+
+# Uploaded and generated files
+backend/uploads/*.pdf
+backend/reports/*.pdf
+
+# Database
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Build output
+dist/
+frontend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

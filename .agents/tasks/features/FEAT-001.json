@@ -1,0 +1,71 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Scaffold the complete project structure and implement the full Node.js/Express backend: package setup, database, PDF extraction, LLM analysis, Zod validation, report generation, all routes and controllers, and supporting middleware. This feature is independent of FEAT-002 except that FEAT-002 reads the API contract defined here.",
+  "status": "pending",
+  "steps": [
+    "1. Create root package.json with convenience scripts (install:all, dev:backend, dev:frontend, start:backend, build:frontend) and .gitignore covering node_modules, uploads/*.pdf, reports/*.pdf, *.sqlite, .env, dist/.",
+
+    "2. Create backend/package.json with 'type':'module' and exact dependencies: express@5.3.0, multer@2.4.0, pdfjs-dist@4.9.155, better-sqlite3@11.0.3, zod@3.25.76, pdfkit@0.20.2, dotenv@16.5.0, helmet@8.3.0, cors@2.8.6, express-rate-limit@7.5.1, uuid@11.1.0. No devDependencies needed for the backend.",
+
+    "3. Create backend/.env.example with: PORT=3001, OPENAI_API_KEY=your_key_here, OPENAI_BASE_URL=https://api.openai.com/v1, OPENAI_MODEL=gpt-4o-mini, MAX_FILE_SIZE_MB=10, FRONTEND_URL=http://localhost:5173",
+
+    "4. Create backend/src/database/schema.sql with two tables: analyses (id TEXT PK, filename TEXT, file_size INTEGER, page_count INTEGER, status TEXT, error_message TEXT, created_at DATETIME, completed_at DATETIME) and analysis_results (id TEXT PK, analysis_id TEXT FK, monthly_rent TEXT, security_deposit TEXT, start_date TEXT, end_date TEXT, lease_duration TEXT, notice_period TEXT, maintenance TEXT, rent_escalation TEXT, late_payment TEXT, early_termination TEXT, renewal_terms TEXT, utilities TEXT, deposit_refund TEXT, raw_details_json TEXT, clauses_json TEXT, conditions_json TEXT, risk_summary_json TEXT, page_count INTEGER, created_at DATETIME).",
+
+    "5. Create backend/src/database/database.js: imports better-sqlite3 and path/fileURLToPath for __dirname. Reads schema.sql and runs it via db.exec() on startup with WAL mode enabled. Exports: db (the Database instance), insertAnalysis(data), updateAnalysisStatus(id, status, error?), insertResult(data), getAnalysisById(id), getResultByAnalysisId(id), getAllAnalyses(limit, offset), deleteAnalysis(id).",
+
+    "6. Create backend/src/utils/textUtils.js: exports normalizeText(str) that collapses whitespace; findQuotationInPage(quotation, pageText) that does a case-insensitive substring search and returns { found: boolean, normalizedQuote: string }; truncateText(str, maxLen); extractJsonFromString(str) that finds the first '{' and last '}' in a string and returns the substring (handles LLM output wrapped in markdown code fences).",
+
+    "7. Create backend/src/schemas/analysisSchema.js: defines and exports the Zod schema for LLM output. Schema shape:\n   - AgreementDetailSchema: z.object({ value: z.string(), page: z.number().int().min(1).optional(), quotation: z.string().optional() })\n   - ClauseStatusSchema: z.enum(['found','not_found','needs_review'])\n   - ClauseSchema: z.object({ status: ClauseStatusSchema, page: z.number().int().min(1).optional(), note: z.string().optional() })\n   - ConditionSchema: z.object({ title: z.string(), explanation: z.string(), quotation: z.string(), page: z.number().int().min(1), category: z.string().optional() })\n   - RiskItemSchema: z.object({ type: z.enum(['missing','warning','info']), message: z.string() })\n   - LLMOutputSchema: z.object({ details: z.object({ monthly_rent, security_deposit, start_date, end_date, lease_duration, notice_period, maintenance, rent_escalation, late_payment, early_termination, renewal_terms, utilities, deposit_refund — all AgreementDetailSchema with .optional() wrapper at top level via z.object() }), clauses: z.object({ rent_payment, security_deposit, lease_duration, notice_termination, maintenance_repairs, utilities, rent_escalation, renewal, property_damage, signatures_dates — all ClauseSchema.optional() }), conditions: z.array(ConditionSchema).max(20), risk_summary: z.array(RiskItemSchema).max(15) })\n   Also exports safeParseLLMOutput(rawString) that calls extractJsonFromString, then JSON.parse, then LLMOutputSchema.safeParse and returns { success, data, error }.",
+
+    "8. Create backend/src/services/pdfService.js: exports extractTextByPage(filePath) as async function. Uses dynamic import: `const { default: pdfjsLib } = await import('pdfjs-dist/legacy/build/pdf.mjs')`. Sets `pdfjsLib.GlobalWorkerOptions.workerSrc = ''` immediately after import. Reads file with fs.readFile, creates Uint8Array, loads document with pdfjsLib.getDocument({ data, useWorkerFetch: false, isEvalSupported: false, useSystemFonts: true }).promise. Iterates pages 1..numPages, calls page.getTextContent(), joins items[].str with space, returns Array<{ pageNumber: number, text: string }>.",
+
+    "9. Create backend/src/services/ocrService.js: stub-only — exports extractTextWithOCR(filePath) that throws new Error('OCR not configured — install tesseract.js to enable scanned PDF support'). Document this clearly.",
+
+    "10. Create backend/src/services/llmService.js: exports analyzeAgreement(pageTexts, filename) as async function. Builds a prompt string (see prompt spec below). Uses native fetch to POST to `${OPENAI_BASE_URL}/chat/completions` with Authorization header, model, messages array (system + user), response_format: { type: 'json_object' } when model supports it, max_tokens: 4000, temperature: 0.1. Implements retry with exponential backoff (max 3 attempts, 1s/2s/4s delays) on 429 and 5xx responses. On success, extracts choices[0].message.content, calls safeParseLLMOutput from schemas/analysisSchema.js. If Zod parse fails, logs warning and returns the partial raw JSON with a flag { partial: true }. Returns { result: LLMOutput, partial: boolean, tokensUsed: number }.\n\n   FULL LLM PROMPT TO USE:\n   System: 'You are a rental agreement analysis assistant. Analyze the provided rental agreement text and extract structured information. Return ONLY valid JSON matching the specified schema. Be precise — only extract information explicitly stated in the document. If a field is not found, set value to \"Not Found\" and omit page/quotation. For quotations, use exact text from the document (max 200 characters). Page numbers must match the [PAGE N] markers in the input.'\n\n   User prompt template:\n   'Analyze this rental agreement and return a JSON object with this exact structure:\n   {\n     \"details\": {\n       \"monthly_rent\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"security_deposit\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"start_date\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"end_date\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"lease_duration\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"notice_period\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"maintenance\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"rent_escalation\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"late_payment\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"early_termination\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"renewal_terms\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"utilities\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" },\n       \"deposit_refund\": { \"value\": \"...\", \"page\": N, \"quotation\": \"...\" }\n     },\n     \"clauses\": {\n       \"rent_payment\": { \"status\": \"found|not_found|needs_review\", \"page\": N, \"note\": \"...\" },\n       \"security_deposit\": { ... },\n       \"lease_duration\": { ... },\n       \"notice_termination\": { ... },\n       \"maintenance_repairs\": { ... },\n       \"utilities\": { ... },\n       \"rent_escalation\": { ... },\n       \"renewal\": { ... },\n       \"property_damage\": { ... },\n       \"signatures_dates\": { ... }\n     },\n     \"conditions\": [\n       { \"title\": \"...\", \"explanation\": \"...\", \"quotation\": \"...\", \"page\": N, \"category\": \"financial|notice|termination|maintenance|other\" }\n     ],\n     \"risk_summary\": [\n       { \"type\": \"missing|warning|info\", \"message\": \"...\" }\n     ]\n   }\n\n   RENTAL AGREEMENT TEXT (with page markers):\n   ${pageTexts.map(p => `[PAGE ${p.pageNumber}]\\n${p.text}`).join('\\n\\n')}\n   '",
+
+    "11. Create backend/src/services/clauseService.js: exports getClauseDisplayNames() returning a map of clause key → display label (e.g. rent_payment → 'Rent and Payment Terms'). Exports enrichClauseResults(clauses) that ensures all 10 expected clause keys are present (defaulting to { status: 'not_found' } for missing ones). This normalisation happens after Zod parsing.",
+
+    "12. Create backend/src/services/evidenceService.js: exports verifyEvidence(analysisResult, pageTexts) which iterates over all detail fields and conditions, calls findQuotationInPage from textUtils, and annotates each item with { evidenceVerified: boolean }. Returns the annotated result. This runs after LLM response but before DB storage.",
+
+    "13. Create backend/src/services/reportService.js: exports generatePDFReport(analysisData, result) using pdfkit. Creates a multi-section PDF: title page with filename + date, summary card section, agreement details table, clause checklist, conditions list, risk summary, footer with disclaimer. Uses __dirname from fileURLToPath. Saves to backend/reports/{analysisId}.pdf. Returns the file path.",
+
+    "14. Create backend/src/middleware/uploadMiddleware.js: configures multer with diskStorage (destination: path.resolve(__dirname, '../../uploads'), filename: uuid + original extension). Exports upload = multer({ storage, limits: { fileSize: MAX_FILE_SIZE_MB * 1024 * 1024 }, fileFilter that accepts only application/pdf and rejects others with a clear error }).",
+
+    "15. Create backend/src/middleware/errorHandler.js: exports errorHandler(err, req, res, next) — catches multer errors (MulterError) and returns 400 with message. Catches Zod validation errors and returns 422. Catches all other errors and returns 500 with { error: err.message } in development or a generic message in production. Never leak stack traces in production.",
+
+    "16. Create backend/src/controllers/analysisController.js: exports uploadAndAnalyze(req, res, next) and getAnalysis(req, res, next). uploadAndAnalyze: validates req.file exists, inserts analysis record in DB with status 'processing', then async: calls pdfService.extractTextByPage, calls llmService.analyzeAgreement, calls clauseService.enrichClauseResults, calls evidenceService.verifyEvidence, calls db.insertResult, updates status to 'completed', returns full result JSON. On any error: updates status to 'failed' with error message, calls next(err). getAnalysis: fetches by ID from DB, joins analysis + result, returns combined JSON.",
+
+    "17. Create backend/src/routes/analysisRoutes.js: POST /api/analysis (upload middleware + uploadAndAnalyze), GET /api/analysis/:id (getAnalysis), GET /api/analysis/:id/report (streams the PDF report if it exists, otherwise generates it on demand), GET /api/analysis/:id/json (returns raw result JSON as downloadable file).",
+
+    "18. Create backend/src/routes/historyRoutes.js: GET /api/history (returns paginated list of analyses with query params page, limit, defaults 1 and 20), DELETE /api/history/:id (deletes analysis + result from DB and removes uploaded file if it exists).",
+
+    "19. Create backend/src/app.js: imports and wires express, helmet, cors (origin from FRONTEND_URL env), express-rate-limit (100 req/15min on /api), json body parser, analysis routes, history routes, health check GET /api/health, error handler middleware. Exports app.",
+
+    "20. Create backend/src/server.js: imports app, dotenv/config, starts listening on PORT env (default 3001), logs startup URL. Handles uncaughtException and unhandledRejection with graceful log-and-exit.",
+
+    "21. Create uploads/.gitkeep and reports/.gitkeep placeholder files inside backend/.",
+
+    "22. Create README.md at root with: project overview, prerequisites (Node 18+, Windows build tools for better-sqlite3), setup steps, env configuration, running dev servers, API reference summary, and architecture notes."
+  ],
+  "acceptance_criteria": [
+    "backend/package.json has 'type':'module' and all 10 required dependencies at pinned versions",
+    "Running 'npm install' in backend/ completes without errors (better-sqlite3 native build succeeds)",
+    "Running 'node src/server.js' from backend/ starts without errors and logs the listening port",
+    "GET http://localhost:3001/api/health returns HTTP 200 with JSON {status:'ok'}",
+    "POST http://localhost:3001/api/analysis with a valid PDF file returns HTTP 200 with a JSON body containing 'id', 'details', 'clauses', 'conditions', 'risk_summary' fields",
+    "GET http://localhost:3001/api/history returns HTTP 200 with an array (possibly empty) wrapped in a pagination object",
+    "Uploading a non-PDF returns HTTP 400 with a descriptive error message",
+    "Uploading a file over the size limit returns HTTP 413 or 400 with a descriptive error message"
+  ],
+  "verification": [
+    "cd backend && npm install",
+    "Copy .env.example to .env and set OPENAI_API_KEY",
+    "node src/server.js  (should print 'Server running on http://localhost:3001')",
+    "curl -s http://localhost:3001/api/health  (should return {\"status\":\"ok\"})",
+    "curl -s -X POST http://localhost:3001/api/analysis -F 'file=@/path/to/test.pdf'  (should return JSON with id and analysis fields)",
+    "curl -s http://localhost:3001/api/history  (should return {analyses:[], total:0, page:1, limit:20} or similar)"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}

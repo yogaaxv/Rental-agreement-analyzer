@@ -1,0 +1,7 @@
+{
+  "task_id": "task-rental-agreement-analyzer",
+  "task_description": "Build a complete full-stack Rental Agreement Analyzer web app from scratch. Users upload a PDF; the Node.js/Express backend extracts text page-by-page via pdfjs-dist, sends it to an OpenAI-compatible LLM, validates the structured JSON response with Zod, stores it in SQLite via better-sqlite3, and optionally generates a PDF report via pdfkit. The React/Vite frontend shows drag-and-drop upload, 6-stage loading animation, summary cards, 15-field details table, clause checklist, conditions list, risk summary, download buttons, and analysis history.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

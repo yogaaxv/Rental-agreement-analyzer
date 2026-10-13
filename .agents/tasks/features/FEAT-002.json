@@ -1,0 +1,71 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Build the complete React/Vite frontend: project scaffold, all 10 components, 3 pages (Home, Analysis, History), API service layer, routing, styling, and end-to-end wiring to the FEAT-001 backend. FEAT-002 depends on FEAT-001 — the API contract (routes, JSON shapes) defined there must exist before the frontend is verified end-to-end.",
+  "status": "pending",
+  "steps": [
+    "1. Create frontend/package.json with 'type':'module' (Vite handles ESM), exact dependencies: react@19.1.0, react-dom@19.1.0, react-router-dom@7.6.2, axios@1.9.0, lucide-react@0.511.0 (check exact latest during install). devDependencies: vite@6.3.5, @vitejs/plugin-react@4.5.2. No TypeScript — plain JS/JSX.",
+
+    "2. Create frontend/vite.config.js: import defineConfig from vite, import react plugin. Configure server.proxy so /api → http://localhost:3001 (avoids CORS in dev). Set build.outDir = '../backend/public' so the production build is served by Express.",
+
+    "3. Create frontend/.env.example with VITE_API_BASE_URL=http://localhost:3001/api",
+
+    "4. Create frontend/index.html: standard Vite HTML template, title 'Rental Agreement Analyzer', links to /src/main.jsx, includes meta viewport and charset.",
+
+    "5. Create frontend/src/main.jsx: renders <App /> inside <BrowserRouter> with React 19 createRoot. Imports index.css.",
+
+    "6. Create frontend/src/index.css: global CSS variables for the design system (--color-navy: #1e2a4a, --color-blue: #3b82f6, --color-indigo: #4f46e5, --color-bg: #f8fafc, --color-white: #ffffff, --color-border: #e2e8f0, --color-text-muted: #64748b, --radius: 0.5rem, --shadow-sm, --shadow-md). Reset box-model. Base font: Inter or system-ui. Body background: var(--color-bg). Responsive breakpoints at 768px and 1024px. Utility classes: .card, .btn-primary, .btn-secondary, .badge-found, .badge-not-found, .badge-review, .spinner, .status-chip.",
+
+    "7. Create frontend/src/services/api.js: creates an Axios instance with baseURL from import.meta.env.VITE_API_BASE_URL || '/api'. Exports: uploadAndAnalyze(file, onUploadProgress) — POST /analysis as FormData with onUploadProgress callback; getAnalysis(id) — GET /analysis/:id; getHistory(page, limit) — GET /history; deleteAnalysis(id) — DELETE /history/:id; getReportUrl(id) — returns string URL for PDF report; getJsonUrl(id) — returns string URL for JSON download. Add response interceptor that normalises error messages from { error: string } API responses.",
+
+    "8. Create frontend/src/App.jsx: imports Routes, Route from react-router-dom. Defines routes: / → <Home />, /analysis/:id → <Analysis />, /history → <History />. Wraps everything in a flex-column layout with <Navbar /> at top.",
+
+    "9. Create frontend/src/components/Navbar.jsx: sticky top navbar. Left: SVG document icon + 'Rental Agreement Analyzer' text. Center/right nav links: Home (/), Analysis History (/history). Right: small shield icon + 'Secure & Private' badge. Responsive — collapses to hamburger on mobile. Uses react-router-dom NavLink for active state styling.",
+
+    "10. Create frontend/src/components/ErrorMessage.jsx: takes { error, onDismiss } props. Renders a red alert card with AlertCircle icon, the error message, and an optional dismiss button. Handles string errors and { message } object errors.",
+
+    "11. Create frontend/src/components/LoadingState.jsx: takes { stage } prop (number 1-6). Displays 6 stage labels:\n    1 - Uploading document\n    2 - Extracting PDF text\n    3 - Identifying rental conditions\n    4 - Checking expected clauses\n    5 - Verifying evidence and page references\n    6 - Preparing the report\n    Renders a vertical stepper: completed stages get a green checkmark, the current stage gets a spinning Loader icon, future stages are grayed out. No fake percentage. Stage is driven by upload progress (stage 1 while XHR < 100%) then by a timer that advances through stages 2-6 every 4 seconds while waiting for the API response.",
+
+    "12. Create frontend/src/components/SummaryCards.jsx: takes { details } prop. Renders 4 horizontal cards for monthly_rent, security_deposit, lease_duration, notice_period. Each card: icon (DollarSign, Shield, Calendar, Clock from lucide-react), label, value (or 'Not Found' in muted color). Responsive grid: 4 cols desktop, 2 cols tablet, 1 col mobile.",
+
+    "13. Create frontend/src/components/AgreementDetails.jsx: takes { details } prop. Renders a table with 13 rows (all detail fields). Each row: field label, value (bold if found, muted 'Not Found' if not), page badge (e.g. 'Page 3'), and a 'View Evidence' button that opens an inline expandable panel showing the quotation. Use ChevronDown/ChevronUp icon to toggle. The table scrolls horizontally on mobile.",
+
+    "14. Create frontend/src/components/ClauseChecklist.jsx: takes { clauses } prop. Renders a 2-column grid of clause cards. Each card: clause display name, status badge (Found = green CheckCircle, Not Found = red XCircle, Needs Review = yellow AlertTriangle), optional note text, optional page number. Never uses the word 'invalid' — only 'Not Found' for missing clauses.",
+
+    "15. Create frontend/src/components/EvidenceViewer.jsx: takes { title, quotation, page, verified } props. Renders a styled blockquote with: quotation marks, the quotation text, 'Page {page}' badge, and a small 'Verified' or 'Unverified' chip based on the verified prop. Used inline within AgreementDetails and ConditionsList.",
+
+    "16. Create frontend/src/components/RiskSummary.jsx: takes { riskSummary, clauses } prop. Renders a section titled 'Risk Summary & Missing Clauses'. Lists risk_summary items with color-coded icons: missing = red AlertCircle, warning = yellow AlertTriangle, info = blue Info. Below that, shows a count of not_found clauses with a note that missing clauses should be reviewed with a qualified professional (not called 'legally invalid').",
+
+    "17. Create frontend/src/components/ReportActions.jsx: takes { analysisId } prop. Renders two buttons side by side: 'Download PDF Report' (opens getReportUrl(analysisId) in new tab) and 'Download JSON' (fetches getJsonUrl(analysisId) and triggers a browser file download via a blob URL). Both buttons show a loading spinner while the request is pending. Includes a small disclaimer text: 'This analysis is for informational purposes only and does not constitute legal advice.'",
+
+    "18. Create frontend/src/pages/Home.jsx: manages state: { file, error, loading, stage, analysisId }. Renders:\n    - Hero section: h1 'Understand Your Rental Agreement in Minutes', description paragraph.\n    - UploadSection component (drag-and-drop area).\n    - How it works: 3-step explainer (Upload → Analyze → Review).\n    When loading=true, renders <LoadingState stage={stage} /> in place of the upload area.\n    On submit: validates file (must be PDF, must be ≤ configured size), calls api.uploadAndAnalyze(file, (e) => { if (e.loaded/e.total === 1) setStage(2) }), starts stage timer, on success navigates to /analysis/:id.",
+
+    "19. Create frontend/src/components/UploadSection.jsx: takes { file, setFile, error } props. Renders a dashed-border drop zone. Drag-over state changes border color. Click opens a hidden file input. Shows selected filename + size after selection. Browse Files button. 'Supported: PDF • Max 10 MB' hint. Rejects non-PDF files on drop and shows an inline error. Remove/clear button when a file is selected.",
+
+    "20. Create frontend/src/pages/Analysis.jsx: reads analysisId from useParams. On mount calls api.getAnalysis(id). Manages { result, loading, error } state. On success renders in order: page header with filename + date, <SummaryCards />, <AgreementDetails />, <ClauseChecklist />, conditions section (inline — iterate conditions array, render each as a card with title, explanation, <EvidenceViewer />), <RiskSummary />, <ReportActions />. On error renders <ErrorMessage />. Includes a 'Back to Home' link.",
+
+    "21. Create frontend/src/pages/History.jsx: fetches history on mount with api.getHistory(). Renders a table or card list: filename, date, status badge, 'View Analysis' link to /analysis/:id, delete button that calls api.deleteAnalysis and removes from local state. Empty state: 'No analyses yet — upload a rental agreement to get started.' Pagination controls if total > limit.",
+
+    "22. Run 'npm install' in frontend/ and confirm no peer dependency errors. Run 'npm run build' to confirm Vite builds without errors to ../backend/public (or dist/ if the outDir is not changed to backend/public — adjust vite.config.js outDir accordingly and note it). Run 'npm run dev' and open localhost:5173 to confirm the UI renders."
+  ],
+  "acceptance_criteria": [
+    "frontend/package.json has all required dependencies at pinned versions",
+    "'npm run build' from frontend/ exits 0 and produces dist/ (or backend/public/) with index.html and assets",
+    "'npm run dev' from frontend/ starts Vite dev server on :5173 without errors",
+    "Opening http://localhost:5173 renders the Navbar and Home page with the upload area",
+    "Drag-and-drop or Browse accepts a PDF file and shows its filename",
+    "Dropping a non-PDF file shows an inline error message",
+    "Clicking Analyze with a valid PDF triggers stage 1 loading state then advances through stages",
+    "After a successful analysis, /analysis/:id renders all 6 sections (SummaryCards, AgreementDetails, ClauseChecklist, conditions, RiskSummary, ReportActions)",
+    "Download PDF Report button opens the report URL",
+    "/history page renders without errors (empty state is acceptable)"
+  ],
+  "verification": [
+    "cd frontend && npm install",
+    "npm run build  (should exit 0, produce dist/ folder)",
+    "npm run dev  (should start on :5173, open in browser and confirm Home page renders)",
+    "With backend running on :3001, upload a test PDF and confirm the full analysis flow completes"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
