@@ -17,10 +17,14 @@ reports/*.pdf
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+backend/*.sqlite
+backend/*.sqlite-shm
+backend/*.sqlite-wal
 
 # Build output
 dist/
 frontend/dist/
+backend/public/
 
 # Logs
 *.log
